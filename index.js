@@ -7,10 +7,13 @@
     bars: [{ id: 'default', name: '基础状态栏', enabled: true, prompt: '根据提取内容生成简洁的 JSON 状态栏。字段使用 hp、mp、mood、location、summary。只输出 JSON。', rule: {type:'all', pattern:''} }]
   };
   let settings;
+  const hostExt = (typeof window !== 'undefined' && window.extension_settings) ? window.extension_settings : null;
+  function readLocal(){ try{return JSON.parse(localStorage.getItem('sbm_settings')||'null');}catch(e){return null;} }
+  function writeLocal(){ try{localStorage.setItem('sbm_settings',JSON.stringify(settings));}catch(e){} }
   const clone = x => JSON.parse(JSON.stringify(x));
-  function getSettings() { settings = extension_settings[MODULE] || clone(defaults); extension_settings[MODULE] = settings; persist(); }
+  function getSettings() { settings = (hostExt && hostExt[MODULE]) || readLocal() || clone(defaults); if(hostExt) hostExt[MODULE]=settings; writeLocal(); persist(); }
   const hostSave = window.saveSettingsDebounced;
-  function persist() { if (hostSave) hostSave(); }
+  function persist() { writeLocal(); if (hostExt && hostSave) hostSave(); }
   function uid() { return 'bar_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function ensurePanel() {
